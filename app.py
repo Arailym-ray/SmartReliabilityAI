@@ -636,7 +636,7 @@ with tab2:
                 "Диагноз системы": s["fault"],
                 "Решение инженера": "Подтверждён",
             })
-            st.rerun()
+            st.success("Решение сохранено в журнал.")
     with fb2:
         if st.button("Отклонить (ложная тревога)", key="reject_defect"):
             save_feedback_row({
@@ -645,7 +645,7 @@ with tab2:
                 "Диагноз системы": s["fault"],
                 "Решение инженера": "Отклонён",
             })
-            st.rerun()
+            st.success("Решение сохранено в журнал.")
 
     log = load_feedback()
     if log:
@@ -673,7 +673,7 @@ with tab2:
             if st.button("Очистить журнал", key="clear_log"):
                 if os.path.exists(FEEDBACK_CSV):
                     os.remove(FEEDBACK_CSV)
-                st.rerun()
+                st.info("Журнал очищен. Обновите страницу для отображения.")
     else:
         st.info("Журнал пуст. Подтвердите или отклоните диагноз, чтобы добавить "
                 "первую запись.")
