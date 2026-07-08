@@ -62,56 +62,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ==================================================================
-# ---- Система входа (демо-прототип; не промышленная аутентификация) ----
-# В реальной системе: БД пользователей, хеширование паролей, сессии.
-USERS = {
-    "operator": {"password": "operator", "role": "Оператор",
-                 "name": "Оператор смены", "dept": "Служба надёжности"},
-    "admin": {"password": "admin", "role": "Администратор",
-              "name": "Администратор системы", "dept": "ИТ / АСУ ТП"},
-}
-
-
-def login_screen():
-    """Экран входа. Показывается, пока пользователь не авторизован."""
-    st.markdown(
-        "<div style='max-width:420px;margin:60px auto 0;background:#fff;"
-        "border:1px solid #e8eaed;border-radius:16px;padding:36px 34px'>"
-        "<div style='font-size:22px;font-weight:700;color:#1a1d21'>SmartReliability AI</div>"
-        "<div style='font-size:13px;color:#9ca3af;margin-bottom:24px'>"
-        "Вход в систему предиктивной диагностики</div></div>",
-        unsafe_allow_html=True)
-    c = st.container()
-    with c:
-        col = st.columns([1, 2, 1])[1]
-        with col:
-            username = st.text_input("Логин", key="login_user")
-            password = st.text_input("Пароль", type="password", key="login_pass")
-            if st.button("Войти", type="primary", use_container_width=True):
-                u = USERS.get(username.strip().lower())
-                if u and u["password"] == password:
-                    st.session_state.auth = True
-                    st.session_state.user = {"login": username.strip().lower(), **u}
-                    st.rerun()
-                else:
-                    st.error("Неверный логин или пароль")
-            st.caption("Демо-доступы: operator / operator · admin / admin")
-            st.markdown(
-                "<div style='font-size:11px;color:#9ca3af;margin-top:20px;line-height:1.5'>"
-                "Это демонстрационная авторизация для прототипа. В промышленной версии — "
-                "аутентификация через БД пользователей с хешированием паролей и защитой сессий."
-                "</div>", unsafe_allow_html=True)
-
-
-# проверка авторизации: если не вошёл — показываем экран входа и останавливаемся
-if not st.session_state.get("auth", False):
-    login_screen()
-    st.stop()
-
-CURRENT_USER = st.session_state.user
-IS_ADMIN = CURRENT_USER["role"] == "Администратор"
-
 LEVEL_COLOR = {"normal": "#1D9E75", "warning": "#EF9F27",
                "anomaly": "#D85A30", "critical": "#E24B4A"}
 LEVEL_FILL = {"normal": "#E1F5EE", "warning": "#FAEEDA",
@@ -256,25 +206,7 @@ def kpi(col, title, value, color="#1a1d21", sub=""):
 
 
 # ------------------------------------------------------------------
-# ---- Sidebar: пользователь, логотип, загрузка данных ----
-# блок текущего пользователя
-_role_color = "#185FA5" if IS_ADMIN else "#1D9E75"
-st.sidebar.markdown(
-    f"<div style='background:#f7f8fa;border-radius:10px;padding:12px 14px;margin-bottom:14px'>"
-    f"<div style='display:flex;align-items:center;gap:10px'>"
-    f"<div style='width:36px;height:36px;border-radius:50%;background:{_role_color};"
-    f"color:#fff;display:flex;align-items:center;justify-content:center;"
-    f"font-weight:700;font-size:15px'>{CURRENT_USER['name'][0]}</div>"
-    f"<div><div style='font-size:13px;font-weight:600;color:#1a1d21'>"
-    f"{CURRENT_USER['name']}</div>"
-    f"<div style='font-size:11px;color:{_role_color};font-weight:600'>"
-    f"{CURRENT_USER['role']}</div></div></div></div>", unsafe_allow_html=True)
-if st.sidebar.button("Выйти", use_container_width=True):
-    st.session_state.auth = False
-    st.session_state.pop("user", None)
-    st.rerun()
-st.sidebar.markdown("---")
-
+# ---- Sidebar: логотип, загрузка данных ----
 st.sidebar.title("SmartReliability AI")
 st.sidebar.caption("Предиктивная диагностика флотомашин и насосного оборудования")
 _aitu_logo = _logo_b64("aitu.jpeg")
@@ -432,13 +364,9 @@ kpi(c5, "Норма", n_norm, LEVEL_COLOR["normal"])
 st.markdown("")
 
 # ==================================================================
-_tab_names = ["Обзор", "Парк оборудования", "Диагностика агрегата", "Отчёты",
-              "Симулятор (live)", "Валидация модели", "Внедрение", "Личный кабинет"]
-if IS_ADMIN:
-    _tab_names.append("Администрирование")
-_tabs = st.tabs(_tab_names)
-tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab_cab = _tabs[:8]
-tab_admin = _tabs[8] if IS_ADMIN else None
+tab0, tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
+    ["Обзор", "Парк оборудования", "Диагностика агрегата", "Отчёты",
+     "Симулятор (live)", "Валидация модели", "Внедрение"])
 
 # ---- TAB 0: обзор (стартовый экран) ----
 with tab0:
@@ -936,36 +864,46 @@ with tab4:
                 ("flow", 150, 250, "Расход", "#1D9E75"),
                 ("press", 370, 155, "Давление", "#534AB7"),
             ]
-            svg = ["<svg viewBox='0 0 640 340' style='width:100%;max-width:640px;"
-                   "background:#fff;border:1px solid #e8eaed;border-radius:12px'>"]
-            # насос
-            svg.append("<ellipse cx='250' cy='250' rx='70' ry='55' fill='#B5D4F4' "
-                       "opacity='0.35' stroke='#185FA5' stroke-width='1.5'/>")
-            svg.append("<text x='250' y='255' text-anchor='middle' font-size='13' "
-                       "font-weight='600' fill='#1a1d21'>Насос</text>")
-            # двигатель
-            svg.append("<rect x='400' y='215' width='130' height='75' rx='8' "
-                       "fill='#B4B2A9' opacity='0.3' stroke='#5F5E5A'/>")
-            svg.append("<text x='465' y='257' text-anchor='middle' font-size='12' "
-                       "fill='#1a1d21'>Двигатель</text>")
-            svg.append("<rect x='320' y='240' width='45' height='22' rx='3' "
-                       "fill='#D3D1C7' opacity='0.6' stroke='#5F5E5A'/>")
-            # датчики
+            # строим анимированную схему через components.html (iframe),
+            # где CSS-пульсация активных датчиков работает надёжно
+            circles = []
+            labels = []
             for sid, x, y, label, color in sensors:
                 is_active = sid in active
-                r = 9 if is_active else 6
-                op = "1" if is_active else "0.35"
-                ring = (f"<circle cx='{x}' cy='{y}' r='16' fill='none' stroke='{color}' "
-                        f"stroke-width='2' opacity='0.5'/>") if is_active else ""
-                svg.append(ring)
-                svg.append(f"<circle cx='{x}' cy='{y}' r='{r}' fill='{color}' "
-                           f"opacity='{op}'/>")
-                lc = color if is_active else "#9ca3af"
-                fw = "700" if is_active else "400"
-                svg.append(f"<text x='{x}' y='{y-20}' text-anchor='middle' "
-                           f"font-size='11' font-weight='{fw}' fill='{lc}'>{label}</text>")
-            svg.append("</svg>")
-            st.markdown("".join(svg), unsafe_allow_html=True)
+                if is_active:
+                    circles.append(
+                        f"<circle class='ring' cx='{x}' cy='{y}' r='9' fill='none' "
+                        f"stroke='{color}' stroke-width='2'/>")
+                    circles.append(
+                        f"<circle class='pulse' cx='{x}' cy='{y}' r='9' fill='{color}'/>")
+                    labels.append(
+                        f"<text x='{x}' y='{y-22}' text-anchor='middle' font-size='11' "
+                        f"font-weight='700' fill='{color}'>{label}</text>")
+                else:
+                    circles.append(
+                        f"<circle cx='{x}' cy='{y}' r='6' fill='{color}' opacity='0.3'/>")
+                    labels.append(
+                        f"<text x='{x}' y='{y-22}' text-anchor='middle' font-size='11' "
+                        f"fill='#9ca3af'>{label}</text>")
+            schematic_html = f"""
+<!DOCTYPE html><html><head><style>
+body {{ margin:0; background:transparent; }}
+@keyframes pulse {{ 0%,100% {{ r:9; opacity:1; }} 50% {{ r:12; opacity:0.65; }} }}
+@keyframes ring {{ 0% {{ r:9; opacity:0.6; }} 100% {{ r:24; opacity:0; }} }}
+.pulse {{ animation: pulse 1.4s ease-in-out infinite; }}
+.ring {{ animation: ring 1.8s ease-out infinite; }}
+</style></head><body>
+<svg viewBox='0 0 640 340' style='width:100%;background:#fff;border:1px solid #e8eaed;border-radius:12px'>
+<ellipse cx='250' cy='250' rx='70' ry='55' fill='#B5D4F4' opacity='0.35' stroke='#185FA5' stroke-width='1.5'/>
+<text x='250' y='255' text-anchor='middle' font-size='13' font-weight='600' fill='#1a1d21'>Насос</text>
+<rect x='400' y='215' width='130' height='75' rx='8' fill='#B4B2A9' opacity='0.3' stroke='#5F5E5A'/>
+<text x='465' y='257' text-anchor='middle' font-size='12' fill='#1a1d21'>Двигатель</text>
+<rect x='320' y='240' width='45' height='22' rx='3' fill='#D3D1C7' opacity='0.6' stroke='#5F5E5A'/>
+{''.join(circles)}
+{''.join(labels)}
+</svg></body></html>
+"""
+            components.html(schematic_html, height=360)
             if active:
                 names = {"accel": "вибрация", "current": "ток", "temp": "температура",
                          "flow": "расход", "press": "давление"}
@@ -1302,109 +1240,3 @@ body { margin:0; background:transparent; font-family:Arial,sans-serif; }
         "Это обеспечивает доверие службы надёжности и адаптацию системы под "
         "специфику конкретного предприятия.")
 
-
-# ---- Личный кабинет (для всех ролей) ----
-with tab_cab:
-    st.subheader("Личный кабинет")
-    u = CURRENT_USER
-    cc1, cc2 = st.columns([1, 2])
-    with cc1:
-        _rc = "#185FA5" if IS_ADMIN else "#1D9E75"
-        st.markdown(
-            f"<div style='background:#fff;border:1px solid #e8eaed;border-radius:14px;"
-            f"padding:24px;text-align:center'>"
-            f"<div style='width:72px;height:72px;border-radius:50%;background:{_rc};"
-            f"color:#fff;display:flex;align-items:center;justify-content:center;"
-            f"font-size:30px;font-weight:700;margin:0 auto 14px'>{u['name'][0]}</div>"
-            f"<div style='font-size:17px;font-weight:700;color:#1a1d21'>{u['name']}</div>"
-            f"<div style='font-size:13px;color:{_rc};font-weight:600;margin-top:4px'>"
-            f"{u['role']}</div>"
-            f"<div style='font-size:12px;color:#9ca3af;margin-top:8px'>{u['dept']}</div>"
-            f"</div>", unsafe_allow_html=True)
-    with cc2:
-        st.markdown("##### Информация профиля")
-        info = pd.DataFrame({
-            "Поле": ["Логин", "Роль", "Подразделение", "Права доступа"],
-            "Значение": [u["login"], u["role"], u["dept"],
-                         "Полный доступ + администрирование" if IS_ADMIN
-                         else "Мониторинг, диагностика, обратная связь"],
-        })
-        st.dataframe(info, use_container_width=True, hide_index=True)
-
-    # мои решения из журнала обратной связи
-    st.markdown("---")
-    st.markdown("##### Мои последние действия")
-    fb = load_feedback()
-    if fb:
-        st.caption(f"Всего решений по диагностике в журнале: {len(fb)}")
-        st.dataframe(pd.DataFrame(fb[::-1]).head(10), use_container_width=True,
-                     hide_index=True)
-    else:
-        st.info("Пока нет зафиксированных решений. Подтвердите или отклоните диагноз "
-                "на вкладке «Диагностика агрегата».")
-
-
-# ---- Панель администрирования (только для админа) ----
-if tab_admin is not None:
-    with tab_admin:
-        st.subheader("Панель администрирования")
-        st.caption("Доступно только роли «Администратор».")
-
-        # системная статистика
-        st.markdown("##### Статистика системы")
-        a1, a2, a3, a4 = st.columns(4)
-        kpi(a1, "Агрегатов", summ["assets"], "#185FA5")
-        kpi(a2, "Записей данных", f"{summ['rows']:,}")
-        kpi(a3, "Пользователей", len(USERS))
-        _fb = load_feedback()
-        kpi(a4, "Решений в журнале", len(_fb))
-
-        # управление пользователями
-        st.markdown("---")
-        st.markdown("##### Пользователи системы")
-        users_df = pd.DataFrame([
-            {"Логин": k, "Имя": v["name"], "Роль": v["role"],
-             "Подразделение": v["dept"]}
-            for k, v in USERS.items()
-        ])
-        st.dataframe(users_df, use_container_width=True, hide_index=True)
-        st.caption("В прототипе пользователи заданы в коде. В промышленной версии — "
-                   "управление через БД с добавлением/удалением и хешированием паролей.")
-
-        # полный журнал обратной связи всех операторов
-        st.markdown("---")
-        st.markdown("##### Журнал обратной связи (все операторы)")
-        if _fb:
-            confirmed = sum(1 for x in _fb if x.get("Решение инженера") == "Подтверждён")
-            rejected = len(_fb) - confirmed
-            m1, m2, m3 = st.columns(3)
-            kpi(m1, "Подтверждено", confirmed, "#1D9E75")
-            kpi(m2, "Отклонено", rejected, "#E24B4A")
-            kpi(m3, "Всего для дообучения", len(_fb), "#185FA5")
-            st.dataframe(pd.DataFrame(_fb[::-1]), use_container_width=True,
-                         hide_index=True)
-            csv_bytes = pd.DataFrame(_fb).to_csv(index=False, encoding="utf-8-sig")
-            st.download_button("Выгрузить журнал (CSV)", data=csv_bytes,
-                               file_name="feedback_log_full.csv", mime="text/csv",
-                               key="admin_dl")
-            if st.button("Очистить журнал системы", key="admin_clear"):
-                if os.path.exists(FEEDBACK_CSV):
-                    os.remove(FEEDBACK_CSV)
-                st.rerun()
-        else:
-            st.info("Журнал обратной связи пуст.")
-
-        # системные настройки (демонстрационные)
-        st.markdown("---")
-        st.markdown("##### Настройки системы")
-        st.caption("Пороги детекции, параметры моделей и интеграция настраиваются "
-                   "администратором. В прототипе значения заданы по умолчанию.")
-        set_df = pd.DataFrame({
-            "Параметр": ["Детектор аномалий", "Классификатор", "Порог тревоги",
-                         "Хранилище обратной связи"],
-            "Значение": ["Гибрид (контрольные карты + One-Class SVM)",
-                         "Random Forest (120 деревьев)",
-                         "калибровка по здоровым данным",
-                         "feedback_log.csv (в проде — БД предприятия)"],
-        })
-        st.dataframe(set_df, use_container_width=True, hide_index=True)
