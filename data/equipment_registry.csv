@@ -1,0 +1,13 @@
+equipment_id,equipment_type,equipment_name,location,manufacturer,model,motor_power_kw,rpm_nominal,commissioning_date,criticality_level,failure_scenario,asset_group
+PMP-101,pump,Насос Н-101,Flotation line 1 / Pump station,KSB,Omega 150-400,75,1485,2018-05-12,high,bearing_wear,pump
+PMP-102,pump,Насос Н-102,Flotation line 1 / Pump station,KSB,Omega 150-400,75,1485,2019-01-25,medium,normal,pump
+PMP-201,pump,Насос Н-201,Regrind circuit,Warmann,AH 6/4,110,1480,2017-08-03,critical,cavitation,pump
+PMP-204,pump,Насос Н-204,Tailings line,Metso,MHD 100,132,980,2016-11-18,critical,imbalance,pump
+PMP-305,pump,Насос Н-305,Concentrate transfer,Grundfos,NB 100,55,2960,2020-02-15,medium,clogging,pump
+PMP-406,pump,Насос Н-406,Water circulation,Sulzer,AHLSTAR A,90,1485,2021-07-30,high,overload,pump
+FLT-101,flotation_machine,Флотомашина ФМ-101,Rougher flotation line 1,Outotec,TankCell e100,45,720,2019-04-09,critical,bearing_wear,flotation
+FLT-102,flotation_machine,Флотомашина ФМ-102,Rougher flotation line 1,Outotec,TankCell e100,45,720,2019-04-09,high,imbalance,flotation
+FLT-203,flotation_machine,Флотомашина ФМ-203,Cleaner flotation,Metso,RCS 50,37,760,2018-09-21,high,overload,flotation
+FLT-301,flotation_machine,Флотомашина ФМ-301,Scavenger flotation,FLSmidth,Wemco 1+1,30,690,2022-03-11,medium,clogging,flotation
+FLT-404,flotation_machine,Флотомашина ФМ-404,Cleaner flotation reserve,Metso,RCS 30,22,720,2023-01-17,low,normal,flotation
+FLT-502,flotation_machine,Флотомашина ФМ-502,Column flotation feed,Outotec,TankCell e70,55,710,2017-06-28,critical,motor_fault,flotation

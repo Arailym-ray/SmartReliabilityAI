@@ -1,0 +1,67 @@
+dataset_name,field,type,description,allowed_values_or_range,source_requirement
+synthetic_sensor_timeseries,timestamp,datetime,Hourly timestamp of simulated telemetry.,2025-01-01 to 2025-03-31,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,equipment_id,string,Unique equipment identifier linking all tables.,PMP-xxx / FLT-xxx,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,equipment_type,category,Equipment category.,pump; flotation_machine,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,vibration_rms,float,"Simulated vibration RMS, mm/s.",>=0,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,vibration_peak,float,"Simulated vibration peak, mm/s.",>=0,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,current_a,float,"Phase A motor current, amperes.",>=0,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,current_b,float,"Phase B motor current, amperes.",>=0,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,current_c,float,"Phase C motor current, amperes.",>=0,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,active_power_kw,float,"Active motor power, kW.",>=0,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,temperature,float,"Bearing or motor temperature, degrees C.",>=15,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,pressure_in,float,"Inlet pressure or equivalent process pressure, bar.",>=0,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,pressure_out,float,"Outlet pressure or equivalent process pressure, bar.",>=0,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,flow_rate,float,"Process flow rate, m3/h or normalized flotation feed flow.",>=0,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,rpm,float,"Rotational speed, rpm.",>=0,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,operating_mode,category,Detected equipment operating mode.,normal_load; low_load; high_load; standby; startup; shutdown; maintenance,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,failure_flag,integer,"1 during simulated failure/corrective downtime, else 0.",0;1,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,failure_type,category,Current simulated condition / defect label.,normal; bearing_wear; imbalance; misalignment; cavitation; overload; clogging; motor_fault; seal_failure; unknown,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,days_to_failure,integer,Days until next simulated failure inside 30-day prediction horizon; -1 if none.,-1 or 0..30,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,maintenance_event,category,Maintenance context or recommendation event marker.,none; scheduled_inspection; inspection_recommended; urgent_maintenance_recommended; corrective_repair,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,health_index,float,Synthetic health index target for demo dashboard/model output.,0..100,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,risk_7_days,float,Synthetic probability-like risk label for 7-day horizon.,0..0.99,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,risk_14_days,float,Synthetic probability-like risk label for 14-day horizon.,0..0.99,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,risk_30_days,float,Synthetic probability-like risk label for 30-day horizon.,0..0.99,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,anomaly_status,category,Derived diagnostic status label.,normal; warning; anomaly; high_risk; critical,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,recommendation,string,Recommended action for maintenance / reliability team.,,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,simulated_fault_severity,float,Latent simulation severity used to generate degradation patterns.,0..1,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,sensor_quality_flag,category,Synthetic telemetry quality marker.,ok; minor_gap; spike_removed,TZ predictive diagnostics spec
+synthetic_sensor_timeseries,notes,string,Short generation notes explaining abnormal state.,,TZ predictive diagnostics spec
+equipment_registry,equipment_id,string,Unique equipment identifier.,,TZ predictive diagnostics spec
+equipment_registry,equipment_type,category,Equipment category.,pump; flotation_machine,TZ predictive diagnostics spec
+equipment_registry,equipment_name,string,Human-readable equipment name.,,TZ predictive diagnostics spec
+equipment_registry,location,string,Process area / installation location.,,TZ predictive diagnostics spec
+equipment_registry,manufacturer,string,Manufacturer.,,TZ predictive diagnostics spec
+equipment_registry,model,string,Equipment model.,,TZ predictive diagnostics spec
+equipment_registry,motor_power_kw,float,Installed motor power.,kW,TZ predictive diagnostics spec
+equipment_registry,rpm_nominal,float,Nominal motor / shaft speed.,rpm,TZ predictive diagnostics spec
+equipment_registry,commissioning_date,date,Commissioning date.,,TZ predictive diagnostics spec
+equipment_registry,criticality_level,category,Relative criticality.,low; medium; high; critical,TZ predictive diagnostics spec
+equipment_registry,failure_scenario,category,Primary synthetic defect scenario.,normal; bearing_wear; imbalance; cavitation; clogging; overload; motor_fault,TZ predictive diagnostics spec
+equipment_registry,asset_group,category,Simplified asset group.,pump; flotation,TZ predictive diagnostics spec
+maintenance_history,equipment_id,varies,Maintenance history field: equipment_id.,,TZ predictive diagnostics spec
+maintenance_history,maintenance_date,varies,Maintenance history field: maintenance_date.,,TZ predictive diagnostics spec
+maintenance_history,maintenance_type,varies,Maintenance history field: maintenance_type.,,TZ predictive diagnostics spec
+maintenance_history,planned_or_unplanned,varies,Maintenance history field: planned_or_unplanned.,,TZ predictive diagnostics spec
+maintenance_history,work_description,varies,Maintenance history field: work_description.,,TZ predictive diagnostics spec
+maintenance_history,replaced_parts,varies,Maintenance history field: replaced_parts.,,TZ predictive diagnostics spec
+maintenance_history,failure_detected,varies,Maintenance history field: failure_detected.,,TZ predictive diagnostics spec
+maintenance_history,failure_type,varies,Maintenance history field: failure_type.,,TZ predictive diagnostics spec
+maintenance_history,downtime_hours,varies,Maintenance history field: downtime_hours.,,TZ predictive diagnostics spec
+maintenance_history,repair_cost,varies,Maintenance history field: repair_cost.,,TZ predictive diagnostics spec
+failure_history,equipment_id,varies,Failure / downtime history field: equipment_id.,,TZ predictive diagnostics spec
+failure_history,failure_start_time,varies,Failure / downtime history field: failure_start_time.,,TZ predictive diagnostics spec
+failure_history,failure_end_time,varies,Failure / downtime history field: failure_end_time.,,TZ predictive diagnostics spec
+failure_history,failure_type,varies,Failure / downtime history field: failure_type.,,TZ predictive diagnostics spec
+failure_history,failure_cause,varies,Failure / downtime history field: failure_cause.,,TZ predictive diagnostics spec
+failure_history,downtime_minutes,varies,Failure / downtime history field: downtime_minutes.,,TZ predictive diagnostics spec
+failure_history,production_loss,varies,Failure / downtime history field: production_loss.,,TZ predictive diagnostics spec
+failure_history,severity,varies,Failure / downtime history field: severity.,,TZ predictive diagnostics spec
+failure_history,operator_comment,varies,Failure / downtime history field: operator_comment.,,TZ predictive diagnostics spec
+scada_alarms,timestamp,varies,SCADA/АСУ ТП alarm field: timestamp.,,TZ predictive diagnostics spec
+scada_alarms,equipment_id,varies,SCADA/АСУ ТП alarm field: equipment_id.,,TZ predictive diagnostics spec
+scada_alarms,alarm_code,varies,SCADA/АСУ ТП alarm field: alarm_code.,,TZ predictive diagnostics spec
+scada_alarms,alarm_text,varies,SCADA/АСУ ТП alarm field: alarm_text.,,TZ predictive diagnostics spec
+scada_alarms,alarm_level,varies,SCADA/АСУ ТП alarm field: alarm_level.,,TZ predictive diagnostics spec
+scada_alarms,alarm_status,varies,SCADA/АСУ ТП alarm field: alarm_status.,,TZ predictive diagnostics spec
+scada_alarms,operator_action,varies,SCADA/АСУ ТП alarm field: operator_action.,,TZ predictive diagnostics spec

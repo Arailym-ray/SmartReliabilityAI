@@ -1,0 +1,13 @@
+equipment_id,equipment_type,dominant_fault,final_fault,max_degradation,n_windows,reaches_failure
+FLOT-002,flotation,normal,imbalance,1.0,300,1
+FLOT-005,flotation,normal,overload,1.0,300,1
+FLOT-009,flotation,normal,normal,0.0,300,0
+FLOT-011,flotation,normal,bearing_wear,1.0,300,1
+FLOT-014,flotation,normal,clogging,1.0,300,1
+PUMP-101,pump,normal,normal,0.0,300,0
+PUMP-118,pump,normal,overload,1.0,300,1
+PUMP-155,pump,normal,imbalance,1.0,300,1
+PUMP-204,pump,normal,bearing_wear,1.0,300,1
+PUMP-207,pump,normal,cavitation,1.0,300,1
+PUMP-233,pump,normal,cavitation,1.0,300,1
+PUMP-311,pump,normal,clogging,1.0,300,1

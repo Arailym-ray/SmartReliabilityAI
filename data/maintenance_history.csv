@@ -1,0 +1,45 @@
+equipment_id,maintenance_date,maintenance_type,planned_or_unplanned,work_description,replaced_parts,failure_detected,failure_type,downtime_hours,repair_cost
+PMP-101,2025-01-31 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,1156.31
+PMP-101,2025-03-02 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,509.35
+PMP-101,2025-03-16 20:00:00,corrective_repair,unplanned,Corrective work after bearing_wear event; equipment restored to normal baseline,"bearing set, seals",True,bearing_wear,10.0,6407.28
+PMP-102,2025-01-31 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,539.0
+PMP-102,2025-03-02 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,959.88
+PMP-201,2025-01-31 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,865.91
+PMP-201,2025-03-02 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,823.59
+PMP-201,2025-02-28 18:00:00,corrective_repair,unplanned,Corrective work after cavitation event; equipment restored to normal baseline,"suction line check, valve adjustment",True,cavitation,8.0,3957.11
+PMP-204,2025-01-31 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,969.48
+PMP-204,2025-03-02 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,849.81
+PMP-204,2025-03-24 16:00:00,corrective_repair,unplanned,Corrective work after imbalance event; equipment restored to normal baseline,impeller cleaning/balancing,True,imbalance,6.0,8453.88
+PMP-305,2025-01-31 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,754.37
+PMP-305,2025-03-02 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,861.22
+PMP-305,2025-03-05 16:00:00,corrective_repair,unplanned,Corrective work after clogging event; equipment restored to normal baseline,"impeller cleaning, strainer service",True,clogging,6.0,12024.91
+PMP-406,2025-01-31 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,639.11
+PMP-406,2025-03-02 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,1150.77
+PMP-406,2025-03-11 22:00:00,corrective_repair,unplanned,Corrective work after overload event; equipment restored to normal baseline,"drive settings, coupling inspection",True,overload,12.0,7089.97
+FLT-101,2025-01-31 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,551.56
+FLT-101,2025-03-02 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,766.6
+FLT-101,2025-03-13 20:00:00,corrective_repair,unplanned,Corrective work after bearing_wear event; equipment restored to normal baseline,"bearing set, seals",True,bearing_wear,10.0,14056.2
+FLT-102,2025-01-31 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,646.54
+FLT-102,2025-03-02 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,1118.33
+FLT-102,2025-02-26 15:00:00,corrective_repair,unplanned,Corrective work after imbalance event; equipment restored to normal baseline,impeller cleaning/balancing,True,imbalance,5.0,12092.57
+FLT-203,2025-01-31 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,724.51
+FLT-203,2025-03-02 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,955.16
+FLT-203,2025-03-21 15:00:00,corrective_repair,unplanned,Corrective work after overload event; equipment restored to normal baseline,"drive settings, coupling inspection",True,overload,5.0,10894.57
+FLT-301,2025-01-31 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,834.96
+FLT-301,2025-03-02 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,1085.64
+FLT-301,2025-03-09 15:00:00,corrective_repair,unplanned,Corrective work after clogging event; equipment restored to normal baseline,"impeller cleaning, strainer service",True,clogging,5.0,11518.23
+FLT-404,2025-01-31 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,833.69
+FLT-404,2025-03-02 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,1142.98
+FLT-502,2025-01-31 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,800.25
+FLT-502,2025-03-02 02:00:00,inspection,planned,"Scheduled inspection, lubrication and sensor check",none,False,normal,4.0,670.87
+FLT-502,2025-03-26 16:00:00,corrective_repair,unplanned,Corrective work after motor_fault event; equipment restored to normal baseline,"motor terminal inspection, insulation test",True,motor_fault,6.0,5587.51
+PMP-101,2025-03-08 04:00:00,condition_based_inspection,planned,Inspection triggered by early bearing_wear anomaly indicators,none,True,bearing_wear,2.0,718.63
+PMP-201,2025-02-21 02:00:00,condition_based_inspection,planned,Inspection triggered by early cavitation anomaly indicators,none,True,cavitation,2.0,1200.57
+PMP-204,2025-03-15 22:00:00,condition_based_inspection,planned,Inspection triggered by early imbalance anomaly indicators,none,True,imbalance,2.0,993.58
+PMP-305,2025-02-25 19:00:00,condition_based_inspection,planned,Inspection triggered by early clogging anomaly indicators,none,True,clogging,2.0,1548.7
+PMP-406,2025-03-04 19:00:00,condition_based_inspection,planned,Inspection triggered by early overload anomaly indicators,none,True,overload,2.0,982.94
+FLT-101,2025-03-04 16:00:00,condition_based_inspection,planned,Inspection triggered by early bearing_wear anomaly indicators,none,True,bearing_wear,2.0,1308.24
+FLT-102,2025-02-16 16:00:00,condition_based_inspection,planned,Inspection triggered by early imbalance anomaly indicators,none,True,imbalance,2.0,1090.57
+FLT-203,2025-03-15 18:00:00,condition_based_inspection,planned,Inspection triggered by early overload anomaly indicators,none,True,overload,2.0,626.48
+FLT-301,2025-03-02 00:00:00,condition_based_inspection,planned,Inspection triggered by early clogging anomaly indicators,none,True,clogging,2.0,678.43
+FLT-502,2025-03-17 20:00:00,condition_based_inspection,planned,Inspection triggered by early motor_fault anomaly indicators,none,True,motor_fault,2.0,1441.84

@@ -1,0 +1,11 @@
+equipment_id,failure_start_time,failure_end_time,failure_type,failure_cause,downtime_minutes,production_loss,severity,operator_comment
+PMP-101,2025-03-16 10:00:00,2025-03-16 20:00:00,bearing_wear,progressive bearing degradation,600,81274.9,high,Generated synthetic failure event for demo training labels.
+PMP-201,2025-02-28 10:00:00,2025-02-28 18:00:00,cavitation,unstable suction pressure and operating point shift,480,126131.51,high,Generated synthetic failure event for demo training labels.
+PMP-204,2025-03-24 10:00:00,2025-03-24 16:00:00,imbalance,impeller/wheel imbalance and deposits,360,71049.73,high,Generated synthetic failure event for demo training labels.
+PMP-305,2025-03-05 10:00:00,2025-03-05 16:00:00,clogging,hydraulic path blockage / solids accumulation,360,108395.3,high,Generated synthetic failure event for demo training labels.
+PMP-406,2025-03-11 10:00:00,2025-03-11 22:00:00,overload,process load above motor baseline,720,162871.59,high,Generated synthetic failure event for demo training labels.
+FLT-101,2025-03-13 10:00:00,2025-03-13 20:00:00,bearing_wear,progressive bearing degradation,600,178455.56,high,Generated synthetic failure event for demo training labels.
+FLT-102,2025-02-26 10:00:00,2025-02-26 15:00:00,imbalance,impeller/wheel imbalance and deposits,300,52289.33,high,Generated synthetic failure event for demo training labels.
+FLT-203,2025-03-21 10:00:00,2025-03-21 15:00:00,overload,process load above motor baseline,300,80824.07,high,Generated synthetic failure event for demo training labels.
+FLT-301,2025-03-09 10:00:00,2025-03-09 15:00:00,clogging,hydraulic path blockage / solids accumulation,300,45524.12,high,Generated synthetic failure event for demo training labels.
+FLT-502,2025-03-26 10:00:00,2025-03-26 16:00:00,motor_fault,phase current imbalance and elevated winding temperature,360,68537.03,high,Generated synthetic failure event for demo training labels.
