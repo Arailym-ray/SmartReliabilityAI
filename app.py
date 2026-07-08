@@ -48,6 +48,18 @@ st.markdown("""
     padding: 8px 18px; font-weight: 500;
   }
   .stTabs [aria-selected="true"] { background: #185FA5 !important; color: #fff !important; border-color:#185FA5 !important; }
+  /* навигация-радио стилизована под вкладки */
+  div[role="radiogroup"] { gap: 6px; flex-wrap: wrap; }
+  div[role="radiogroup"] label {
+    background: #ffffff; border: 1px solid #e8eaed; border-radius: 8px;
+    padding: 8px 16px; margin: 0 !important; cursor: pointer;
+    font-weight: 500; transition: all 0.15s;
+  }
+  div[role="radiogroup"] label:hover { border-color: #185FA5; }
+  div[role="radiogroup"] label:has(input:checked) {
+    background: #185FA5; color: #fff; border-color: #185FA5;
+  }
+  div[role="radiogroup"] label > div:first-child { display: none; }
   div[data-testid="stMetricValue"] { font-size: 22px; }
   .asset-card { background:#fff; border:1px solid #e8eaed; border-radius:12px; padding:14px 18px; margin-bottom:8px; }
   .pill { display:inline-block; font-size:12px; font-weight:600; padding:3px 12px; border-radius:20px; }
@@ -364,12 +376,39 @@ kpi(c5, "Норма", n_norm, LEVEL_COLOR["normal"])
 st.markdown("")
 
 # ==================================================================
-tab0, tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
-    ["Обзор", "Парк оборудования", "Диагностика агрегата", "Отчёты",
-     "Симулятор (live)", "Валидация модели", "Внедрение"])
+# навигация через session_state — запоминает активную вкладку,
+# поэтому смена виджетов (selectbox, slider) не сбрасывает на «Обзор»
+_PAGES = ["Обзор", "Парк оборудования", "Диагностика агрегата", "Отчёты",
+          "Симулятор (live)", "Валидация модели", "Внедрение"]
+if "active_page" not in st.session_state:
+    st.session_state.active_page = _PAGES[0]
+
+_nav = st.radio("Навигация", _PAGES, horizontal=True,
+                key="active_page", label_visibility="collapsed")
+
+
+class _TabCtx:
+    """Контекст-менеджер: рендерит блок только если его страница активна."""
+    def __init__(self, name):
+        self.active = (st.session_state.active_page == name)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+tab0 = _TabCtx("Обзор")
+tab1 = _TabCtx("Парк оборудования")
+tab2 = _TabCtx("Диагностика агрегата")
+tab3 = _TabCtx("Отчёты")
+tab4 = _TabCtx("Симулятор (live)")
+tab5 = _TabCtx("Валидация модели")
+tab6 = _TabCtx("Внедрение")
 
 # ---- TAB 0: обзор (стартовый экран) ----
-with tab0:
+if tab0.active:
     avg_hi_all = round(np.mean([s["hi"] for s in states]))
     # hero
     st.markdown(
@@ -423,7 +462,7 @@ with tab0:
 
 
 # ---- TAB 1: список оборудования (ТЗ 11) ----
-with tab1:
+if tab1.active:
     st.subheader("Оборудование, ранжированное по риску")
     st.caption("Худшие агрегаты сверху. Цвет — уровень аномалии. «Пик 14д» — был ли риск за последние две недели.")
 
@@ -492,7 +531,7 @@ with tab1:
             f"</div>", unsafe_allow_html=True)
 
 # ---- TAB 2: карточка агрегата (ТЗ 11) ----
-with tab2:
+if tab2.active:
     ids = [s["equipment_id"] for s in states]
     sel = st.selectbox("Выберите агрегат", ids)
     s = next(x for x in states if x["equipment_id"] == sel)
@@ -679,7 +718,7 @@ with tab2:
                 "первую запись.")
 
 # ---- TAB 3: экономика (ТЗ 13) ----
-with tab3:
+if tab3.active:
     st.subheader("Отчёты и статистика парка")
 
     # ---- Экспорт отчёта в Excel ----
@@ -723,7 +762,7 @@ with tab3:
 
 
 # ---- TAB 4: live-симулятор ----
-with tab4:
+if tab4.active:
     st.subheader("Симулятор потоковой диагностики")
     st.caption("Имитация живого оборудования: показания датчиков поступают в "
                "реальном времени, система оценивает состояние на каждом шаге.")
@@ -844,7 +883,8 @@ with tab4:
 
             # ---- Схема агрегата: где проявился дефект ----
             st.markdown("##### Где дефект проявился на оборудовании")
-            st.caption("Подсвечены датчики, по сигналам которых система определила дефект.")
+            st.caption("Флотомашина FM-8: подсвечены датчики, по сигналам которых "
+                       "система определила дефект.")
             # какие датчики связаны с каждым дефектом
             FAULT_SENSORS = {
                 "bearing_wear": {"accel", "temp"},
@@ -862,14 +902,16 @@ with tab4:
                 ("accel", 175, 78, "Вибрация вала", "#E24B4A"),
                 ("current", 355, 78, "Ток привода (MCSA)", "#7F77DD"),
                 ("temp", 505, 78, "Температура", "#EF9F27"),
-                ("flow", 70, 205, "Расход пульпы", "#1D9E75"),
-                ("press", 585, 205, "Аэрация / давление", "#534AB7"),
+                ("flow", 31, 245, "Расход пульпы", "#1D9E75"),
+                ("press", 609, 245, "Аэрация", "#534AB7"),
             ]
             circles = []
             labels = []
             for sid, x, y, label, color in sensors:
                 is_active = sid in active
-                anchor = "start" if sid == "flow" else ("end" if sid == "press" else "middle")
+                anchor = "middle"
+                # flow/press — подпись под датчиком, остальные — над
+                ly = y + 26 if sid in ("flow", "press") else y - 18
                 if is_active:
                     circles.append(
                         f"<circle class='ring' cx='{x}' cy='{y}' r='9' fill='none' "
@@ -877,13 +919,13 @@ with tab4:
                     circles.append(
                         f"<circle class='pulse' cx='{x}' cy='{y}' r='9' fill='{color}'/>")
                     labels.append(
-                        f"<text x='{x}' y='{y-18}' text-anchor='{anchor}' font-size='12' "
+                        f"<text x='{x}' y='{ly}' text-anchor='{anchor}' font-size='12' "
                         f"font-weight='700' fill='{color}'>{label}</text>")
                 else:
                     circles.append(
                         f"<circle cx='{x}' cy='{y}' r='6' fill='{color}' opacity='0.3'/>")
                     labels.append(
-                        f"<text x='{x}' y='{y-18}' text-anchor='{anchor}' font-size='11' "
+                        f"<text x='{x}' y='{ly}' text-anchor='{anchor}' font-size='11' "
                         f"fill='#9ca3af'>{label}</text>")
 
             # приводные блоки импеллеров над камерами (x-центры)
@@ -918,7 +960,7 @@ body {{ margin:0; padding:0; background:transparent; }}
 .ring {{ animation: ring 1.8s ease-out infinite; }}
 .imp {{ animation: spin 3s linear infinite; }}
 </style></head><body>
-<svg viewBox='0 0 640 300' style='width:100%;display:block;background:#fff;border:1px solid #e8eaed;border-radius:12px'>
+<svg viewBox='0 0 640 285' style='width:100%;display:block;background:#fff;border:1px solid #e8eaed;border-radius:12px'>
 <!-- Флотомашина FM-8: ряд камер в синем корпусе -->
 <!-- корпус (синий, как реальная FM-8) -->
 <rect x='40' y='180' width='560' height='75' rx='6' fill='#5B9BD5' opacity='0.35' stroke='#2E6DA4' stroke-width='1.5'/>
@@ -932,12 +974,11 @@ body {{ margin:0; padding:0; background:transparent; }}
 <!-- опорная рама -->
 <rect x='40' y='255' width='560' height='12' rx='2' fill='#B4B2A9' opacity='0.4'/>
 {''.join(drives)}
-<text x='320' y='285' text-anchor='middle' font-size='13' font-weight='600' fill='#1a1d21'>Флотомашина FM-8 (камеры с импеллерами)</text>
 {''.join(circles)}
 {''.join(labels)}
 </svg></body></html>
 """
-            components.html(schematic_html, height=360)
+            components.html(schematic_html, height=430)
             if active:
                 names = {"accel": "вибрация", "current": "ток", "temp": "температура",
                          "flow": "расход", "press": "давление"}
@@ -954,7 +995,7 @@ body {{ margin:0; padding:0; background:transparent; }}
 
 
 # ---- TAB 5: валидация модели ----
-with tab5:
+if tab5.active:
     st.subheader("Валидация модели на потоковых сценариях")
     st.caption("Система прогоняет контролируемые сценарии деградации по всем типам "
                "дефектов и оценивает: обнаруживает ли дефект, за сколько времени до "
@@ -1082,7 +1123,7 @@ with tab5:
 
 
 # ---- TAB 6: промышленное внедрение ----
-with tab6:
+if tab6.active:
     st.subheader("Архитектура промышленного внедрения")
     st.caption("Как система подключается к инфраструктуре предприятия — от датчиков "
                "до ремонтной заявки.")
