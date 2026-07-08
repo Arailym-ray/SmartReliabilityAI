@@ -28,6 +28,7 @@ from fft_analysis import analyze_all_snapshots, compute_fft, load_raw
 from export import build_report
 from diagnostics import RECOMMENDATIONS
 import time
+import math
 
 st.set_page_config(page_title="SmartReliability AI", layout="wide",
                    initial_sidebar_state="expanded")
@@ -929,50 +930,81 @@ if tab4.active:
                         f"fill='#9ca3af'>{label}</text>")
 
             # приводные блоки импеллеров над камерами (x-центры)
-            drive_x = [110, 260, 410, 545]
+            drive_x = [130, 275, 420, 545]
             drives = []
             for i, dx in enumerate(drive_x):
-                # опора привода (H-образная рама)
+                # опора привода (H-рама)
                 drives.append(
-                    f"<rect x='{dx-32}' y='95' width='64' height='70' rx='3' "
-                    f"fill='none' stroke='#4A90C2' stroke-width='2'/>")
-                # жёлтая верхняя площадка (как на реальном фото FM-8)
+                    f"<rect x='{dx-30}' y='100' width='60' height='62' rx='4' "
+                    f"fill='none' stroke='#4A90C2' stroke-width='2.5'/>")
+                # жёлтая площадка (как на фото FM-8) с лёгкой тенью
                 drives.append(
-                    f"<rect x='{dx-38}' y='78' width='76' height='18' rx='4' "
-                    f"fill='#F5C518' opacity='0.85' stroke='#B8901A'/>")
+                    f"<rect x='{dx-36}' y='82' width='72' height='20' rx='5' "
+                    f"fill='#F5C518' stroke='#C99A0E' stroke-width='1.2'/>")
+                drives.append(
+                    f"<rect x='{dx-36}' y='96' width='72' height='6' rx='3' "
+                    f"fill='#C99A0E' opacity='0.35'/>")
+                # мотор-редуктор на площадке
+                drives.append(
+                    f"<rect x='{dx-12}' y='70' width='24' height='14' rx='3' "
+                    f"fill='#6B7280' opacity='0.7'/>")
                 # вал импеллера
                 drives.append(
-                    f"<rect x='{dx-4}' y='95' width='8' height='95' fill='#5F5E5A' opacity='0.6'/>")
-                # импеллер внутри камеры (вращается)
+                    f"<rect x='{dx-3}' y='100' width='6' height='108' rx='2' "
+                    f"fill='#8A8A8A'/>")
+                # импеллер (чёткие лопасти, вращается)
+                blades = []
+                for a in range(0, 360, 60):
+                    rad = math.radians(a)
+                    x2 = 20 * math.cos(rad)
+                    y2 = 20 * math.sin(rad)
+                    blades.append(
+                        f"<ellipse cx='{x2:.0f}' cy='{y2:.0f}' rx='9' ry='4' "
+                        f"transform='rotate({a} {x2:.0f} {y2:.0f})' "
+                        f"fill='#2E6DA4' opacity='0.6'/>")
                 drives.append(
-                    f"<g class='imp' style='transform-origin:{dx}px 205px'>"
-                    f"<ellipse cx='{dx}' cy='205' rx='22' ry='8' fill='#378ADD' opacity='0.55'/>"
-                    f"<ellipse cx='{dx}' cy='205' rx='8' ry='22' fill='#378ADD' opacity='0.35'/>"
-                    f"</g>")
+                    f"<g class='imp' style='transform-origin:{dx}px 208px'>"
+                    f"<g transform='translate({dx} 208)'>{''.join(blades)}"
+                    f"<circle r='6' fill='#1F4E79'/></g></g>")
+                # пузырьки аэрации над импеллером (характерно для флотации)
+                drives.append(
+                    f"<g class='bub' style='animation-delay:{i*0.4}s'>"
+                    f"<circle cx='{dx-8}' cy='195' r='2.5' fill='#fff' opacity='0.7'/>"
+                    f"<circle cx='{dx+6}' cy='190' r='2' fill='#fff' opacity='0.6'/>"
+                    f"<circle cx='{dx}' cy='185' r='1.6' fill='#fff' opacity='0.5'/></g>")
 
             schematic_html = f"""
 <!DOCTYPE html><html><head><style>
 body {{ margin:0; padding:0; background:transparent; }}
-@keyframes pulse {{ 0%,100% {{ r:9; opacity:1; }} 50% {{ r:13; opacity:0.6; }} }}
-@keyframes ring {{ 0% {{ r:9; opacity:0.6; }} 100% {{ r:26; opacity:0; }} }}
+@keyframes pulse {{ 0%,100% {{ r:9; opacity:1; }} 50% {{ r:13; opacity:0.55; }} }}
+@keyframes ring {{ 0% {{ r:9; opacity:0.6; }} 100% {{ r:28; opacity:0; }} }}
 @keyframes spin {{ to {{ transform: rotate(360deg); }} }}
+@keyframes rise {{ 0% {{ transform: translateY(0); opacity:0.7; }} 100% {{ transform: translateY(-14px); opacity:0; }} }}
 .pulse {{ animation: pulse 1.4s ease-in-out infinite; }}
-.ring {{ animation: ring 1.8s ease-out infinite; }}
-.imp {{ animation: spin 3s linear infinite; }}
+.ring {{ animation: ring 1.9s ease-out infinite; }}
+.imp {{ animation: spin 3.5s linear infinite; }}
+.bub {{ animation: rise 2.2s ease-out infinite; }}
 </style></head><body>
-<svg viewBox='0 0 640 285' style='width:100%;display:block;background:#fff;border:1px solid #e8eaed;border-radius:12px'>
-<!-- Флотомашина FM-8: ряд камер в синем корпусе -->
-<!-- корпус (синий, как реальная FM-8) -->
-<rect x='40' y='180' width='560' height='75' rx='6' fill='#5B9BD5' opacity='0.35' stroke='#2E6DA4' stroke-width='1.5'/>
+<svg viewBox='0 0 640 290' style='width:100%;display:block;background:linear-gradient(180deg,#fff,#fafbfc);border:1px solid #e8eaed;border-radius:12px'>
+<!-- Флотомашина FM-8 -->
+<!-- корпус: градиент синего -->
+<defs><linearGradient id='body' x1='0' y1='0' x2='0' y2='1'>
+<stop offset='0' stop-color='#7EB3E0' stop-opacity='0.5'/>
+<stop offset='1' stop-color='#5B9BD5' stop-opacity='0.35'/></linearGradient></defs>
+<rect x='40' y='175' width='560' height='82' rx='8' fill='url(#body)' stroke='#2E6DA4' stroke-width='2'/>
+<!-- уровень пульпы -->
+<rect x='46' y='185' width='548' height='4' rx='2' fill='#2E6DA4' opacity='0.25'/>
 <!-- разделители камер -->
-<line x1='190' y1='180' x2='190' y2='255' stroke='#2E6DA4' stroke-width='1.5' opacity='0.6'/>
-<line x1='340' y1='180' x2='340' y2='255' stroke='#2E6DA4' stroke-width='1.5' opacity='0.6'/>
-<line x1='480' y1='180' x2='480' y2='255' stroke='#2E6DA4' stroke-width='1.5' opacity='0.6'/>
-<!-- подача пульпы (слева) и разгрузка (справа) -->
-<rect x='20' y='198' width='22' height='30' rx='3' fill='#9FE1CB' opacity='0.6' stroke='#0F6E56'/>
-<rect x='598' y='198' width='22' height='30' rx='3' fill='#F5C4B3' opacity='0.6' stroke='#993C1D'/>
+<line x1='185' y1='175' x2='185' y2='257' stroke='#2E6DA4' stroke-width='1.5' opacity='0.5'/>
+<line x1='330' y1='175' x2='330' y2='257' stroke='#2E6DA4' stroke-width='1.5' opacity='0.5'/>
+<line x1='475' y1='175' x2='475' y2='257' stroke='#2E6DA4' stroke-width='1.5' opacity='0.5'/>
+<!-- патрубки подачи/разгрузки -->
+<rect x='18' y='196' width='24' height='34' rx='4' fill='#9FE1CB' stroke='#0F6E56' stroke-width='1.2'/>
+<rect x='598' y='196' width='24' height='34' rx='4' fill='#F5C4B3' stroke='#993C1D' stroke-width='1.2'/>
 <!-- опорная рама -->
-<rect x='40' y='255' width='560' height='12' rx='2' fill='#B4B2A9' opacity='0.4'/>
+<rect x='40' y='257' width='560' height='14' rx='3' fill='#B4B2A9' opacity='0.45'/>
+<rect x='80' y='271' width='16' height='14' fill='#B4B2A9' opacity='0.35'/>
+<rect x='544' y='271' width='16' height='14' fill='#B4B2A9' opacity='0.35'/>
 {''.join(drives)}
 {''.join(circles)}
 {''.join(labels)}
