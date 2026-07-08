@@ -57,30 +57,46 @@ def run_validation(engine, n_runs=3):
     """
     y_true, y_pred = [], []
     lead_times = []
-    detect_flags = []
     per_fault = {}
 
+def run_validation(engine, n_runs=3):
+    """
+    Прогоняет все дефекты + здоровые сценарии × n_runs и считает метрики.
+    Детекция считается честно: с классом «норма», ложными тревогами и recall.
+    """
+    y_true, y_pred = [], []
+    lead_times = []
+    per_fault = {}
+
+    # для честной детекции: TP/FP/TN/FN на уровне сценариев
+    tp = fp = tn = fn = 0
+
+    # --- дефектные сценарии ---
     for fault in FAULTS:
-        f_detect, f_lead, f_type = [], [], []
+        f_lead, f_type, f_detect = [], [], []
         for seed in range(n_runs):
             df = _run_one(engine, fault, seed)
-
-            # 1. детекция: была ли тревога до "отказа" (severity>=0.8)
-            failure = df[df["severity"] >= 0.8]
-            alarm = df[df["level"].isin(["warning", "anomaly", "critical"])]
-            detected = len(alarm) > 0
+            late = df[df["severity"] > 0.6]
+            # сценарий считается «обнаруженным», если в поздней фазе была
+            # устойчивая тревога (anomaly/critical)
+            alarms_late = late[late["level"].isin(["anomaly", "critical"])]
+            detected = len(alarms_late) >= max(1, int(0.3 * len(late)))
             f_detect.append(detected)
-            detect_flags.append(detected)
+            if detected:
+                tp += 1
+            else:
+                fn += 1
 
-            # 2. lead time: за сколько шагов ДО отказа первая тревога
+            # lead time
+            failure = df[df["severity"] >= 0.8]
+            alarm = df[df["level"].isin(["anomaly", "critical"])]
             if len(failure) and len(alarm):
                 lead = failure.iloc[0]["step"] - alarm.iloc[0]["step"]
                 if lead >= 0:
                     lead_times.append(lead)
                     f_lead.append(lead)
 
-            # 3. классификация: тип в поздней фазе (severity>0.6)
-            late = df[df["severity"] > 0.6]
+            # классификация типа
             if len(late):
                 common = late["pred"].value_counts().index[0]
                 y_true.append(fault)
@@ -93,16 +109,41 @@ def run_validation(engine, n_runs=3):
             type_acc=np.mean(f_type) if f_type else 0,
         )
 
-    # агрегированные метрики классификации
+    # --- ЗДОРОВЫЕ сценарии (класс «норма») для оценки ложных тревог ---
+    healthy_runs = len(FAULTS) * n_runs  # столько же, сколько дефектных
+    for seed in range(healthy_runs):
+        df = _run_one(engine, "normal", seed + 100, degrade_rate=0.0)
+        # ложная тревога, если система устойчиво сигналит anomaly/critical
+        alarms = df[df["level"].isin(["anomaly", "critical"])]
+        false_alarm = len(alarms) >= max(1, int(0.3 * len(df)))
+        if false_alarm:
+            fp += 1
+        else:
+            tn += 1
+
+    # --- честные метрики детекции ---
+    det_precision = tp / (tp + fp) if (tp + fp) else 0
+    det_recall = tp / (tp + fn) if (tp + fn) else 0
+    det_accuracy = (tp + tn) / (tp + tn + fp + fn) if (tp + tn + fp + fn) else 0
+    false_alarm_rate = fp / (fp + tn) if (fp + tn) else 0
+
+    # --- метрики классификации типа дефекта ---
     labels = FAULTS
     p, r, f1, _ = precision_recall_fscore_support(
         y_true, y_pred, labels=labels, average="macro", zero_division=0)
     cm = confusion_matrix(y_true, y_pred, labels=labels)
 
     return dict(
-        detection_rate=np.mean(detect_flags),
+        # честная детекция (с классом норма)
+        det_accuracy=det_accuracy,
+        det_precision=det_precision,
+        det_recall=det_recall,
+        false_alarm_rate=false_alarm_rate,
+        tp=tp, fp=fp, tn=tn, fn=fn,
+        # классификация типа
         type_accuracy=np.mean([t == pd_ for t, pd_ in zip(y_true, y_pred)]),
         precision=p, recall=r, f1=f1,
+        # раннее предупреждение
         lead_mean=np.mean(lead_times) if lead_times else 0,
         lead_median=np.median(lead_times) if lead_times else 0,
         lead_min=min(lead_times) if lead_times else 0,
