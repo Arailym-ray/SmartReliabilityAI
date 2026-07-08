@@ -60,11 +60,25 @@ class DiagnosticEngine:
         raw = self._hybrid_raw(Xs)               # комбинированный сырой score
         self._smin, self._smax = raw[healthy].min(), raw.max()
         score01 = self._norm_score(raw)
-        # пороги 4 уровней по перцентилям всего score
-        self._thresholds = dict(
-            warning=np.percentile(score01, 70),
-            anomaly=np.percentile(score01, 85),
-            critical=np.percentile(score01, 95))
+        # пороги калибруются по ЗДОРОВЫМ данным: норма должна почти всегда
+        # оставаться ниже warning, иначе система даёт ложные тревоги.
+        # Используем высокие перцентили здорового распределения.
+        healthy_scores = score01[healthy]
+        if len(healthy_scores) > 20:
+            # warning может изредка срабатывать на норме (это лишь «наблюдение»),
+            # но anomaly/critical (настоящая тревога) должны быть очень редки на
+            # здоровом оборудовании — ставим пороги выше максимума нормы.
+            h_max = float(healthy_scores.max())
+            h95 = float(np.percentile(healthy_scores, 95))
+            self._thresholds = dict(
+                warning=h95,
+                anomaly=h_max + 0.20 * (1 - h_max),
+                critical=h_max + 0.50 * (1 - h_max))
+        else:
+            self._thresholds = dict(
+                warning=np.percentile(score01, 70),
+                anomaly=np.percentile(score01, 85),
+                critical=np.percentile(score01, 95))
 
         # 10.4 классификатор дефектов (обучаем на всех размеченных)
         self.clf = RandomForestClassifier(n_estimators=120, max_depth=12,
