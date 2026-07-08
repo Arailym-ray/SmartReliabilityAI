@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+import streamlit.components.v1 as components
 
 from data import (load_timeseries, load_registry, load_failures, load_alarms,
                   preprocess, data_summary, SENSOR_COLS)
@@ -36,7 +37,8 @@ st.markdown("""
 <style>
   .stApp { background: #f7f8fa; }
   section[data-testid="stSidebar"] { background: #ffffff; border-right: 1px solid #e8eaed; }
-  #MainMenu, footer, header { visibility: hidden; }
+  #MainMenu, footer { visibility: hidden; }
+  header[data-testid="stHeader"] { background: transparent; }
   .block-container { padding-top: 2rem; padding-bottom: 2rem; max-width: 1280px; }
   h1 { font-size: 26px !important; font-weight: 600 !important; color: #1a1d21 !important; }
   h2, h3 { color: #1a1d21 !important; font-weight: 600 !important; }
@@ -81,6 +83,25 @@ def hi_color(hi):
 
 
 ASSETS = os.path.join(os.path.dirname(__file__), "assets")
+FEEDBACK_CSV = os.path.join(os.path.dirname(__file__), "feedback_log.csv")
+
+
+def load_feedback():
+    """Читает журнал решений инженера из CSV (переживает перезагрузку)."""
+    if os.path.exists(FEEDBACK_CSV):
+        try:
+            return pd.read_csv(FEEDBACK_CSV).to_dict("records")
+        except Exception:
+            return []
+    return []
+
+
+def save_feedback_row(row):
+    """Дописывает одно решение в CSV-файл."""
+    df_row = pd.DataFrame([row])
+    header = not os.path.exists(FEEDBACK_CSV)
+    df_row.to_csv(FEEDBACK_CSV, mode="a", header=header, index=False,
+                  encoding="utf-8-sig")
 
 
 def gauge_chart(value, title="Health Index", height=200):
@@ -552,31 +573,31 @@ with tab2:
     # ---- Человек в контуре: подтверждение диагноза инженером ----
     st.markdown("---")
     st.markdown("##### Обратная связь инженера")
-    st.caption("Подтвердите или отклоните диагноз системы. Решения накапливаются "
-               "в журнале и служат основой для дообучения модели.")
-
-    if "feedback_log" not in st.session_state:
-        st.session_state.feedback_log = []
+    st.caption("Подтвердите или отклоните диагноз системы. Решения сохраняются в "
+               "журнал (файл feedback_log.csv) и служат основой для дообучения модели. "
+               "В промышленной версии — запись в БД предприятия.")
 
     fb1, fb2, fb3 = st.columns([1, 1, 2])
     with fb1:
         if st.button("Подтвердить дефект", key="confirm_defect"):
-            st.session_state.feedback_log.append({
+            save_feedback_row({
                 "Время": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M"),
                 "Агрегат": sel,
                 "Диагноз системы": s["fault"],
                 "Решение инженера": "Подтверждён",
             })
+            st.rerun()
     with fb2:
         if st.button("Отклонить (ложная тревога)", key="reject_defect"):
-            st.session_state.feedback_log.append({
+            save_feedback_row({
                 "Время": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M"),
                 "Агрегат": sel,
                 "Диагноз системы": s["fault"],
                 "Решение инженера": "Отклонён",
             })
+            st.rerun()
 
-    log = st.session_state.feedback_log
+    log = load_feedback()
     if log:
         confirmed = sum(1 for x in log if x["Решение инженера"] == "Подтверждён")
         rejected = len(log) - confirmed
@@ -589,11 +610,20 @@ with tab2:
             f"<div style='padding:8px 14px;background:#E6F1FB;border-radius:8px;"
             f"font-size:13px;color:#185FA5'>Всего решений для дообучения: "
             f"<b>{len(log)}</b></div></div>", unsafe_allow_html=True)
-        st.markdown("**Журнал решений инженера**")
+        st.markdown("**Журнал решений инженера** (сохранён в feedback_log.csv)")
         st.dataframe(pd.DataFrame(log[::-1]), use_container_width=True, hide_index=True)
-        if st.button("Очистить журнал", key="clear_log"):
-            st.session_state.feedback_log = []
-            st.rerun()
+
+        jc1, jc2 = st.columns([1, 3])
+        with jc1:
+            csv_bytes = pd.DataFrame(log).to_csv(index=False, encoding="utf-8-sig")
+            st.download_button("Скачать журнал (CSV)", data=csv_bytes,
+                               file_name="feedback_log.csv", mime="text/csv",
+                               key="dl_feedback")
+        with jc2:
+            if st.button("Очистить журнал", key="clear_log"):
+                if os.path.exists(FEEDBACK_CSV):
+                    os.remove(FEEDBACK_CSV)
+                st.rerun()
     else:
         st.info("Журнал пуст. Подтвердите или отклоните диагноз, чтобы добавить "
                 "первую запись.")
@@ -903,6 +933,128 @@ with tab6:
                        f"{ax+gap-6},{y+49}' fill='#cbd0d6'/>")
     svg.append("</svg>")
     st.markdown("".join(svg), unsafe_allow_html=True)
+
+    # ---- Анимированная схема аппаратной части (датчики на агрегате) ----
+    st.markdown("---")
+    st.markdown("##### Аппаратная часть: датчики на агрегате")
+    st.caption("Датчики снимают сигнал в реальном времени и передают данные "
+               "контроллеру сбора. Пульсация показывает активный сбор сигнала.")
+    hardware_html = """
+<!DOCTYPE html><html><head><style>
+body { margin:0; background:transparent; font-family:Arial,sans-serif; }
+@keyframes sPulse { 0%,100% { r:6; opacity:1; } 50% { r:9; opacity:0.65; } }
+@keyframes sRing { 0% { r:6; opacity:0.5; } 100% { r:18; opacity:0; } }
+@keyframes flow { to { stroke-dashoffset:-24; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+.sensor { animation: sPulse 1.6s ease-in-out infinite; }
+.ring { animation: sRing 2s ease-out infinite; }
+.flow { stroke-dasharray:4 7; animation: flow 1s linear infinite; }
+.fan { animation: spin 3s linear infinite; transform-origin: 250px 250px; }
+.lbl { font-size:12px; font-weight:600; }
+</style></head><body>
+<svg width="100%" viewBox="0 0 680 480" xmlns="http://www.w3.org/2000/svg">
+<rect x="60" y="360" width="560" height="20" rx="3" fill="#B4B2A9" opacity="0.5" stroke="#5F5E5A" stroke-width="0.5"/>
+<rect x="90" y="380" width="30" height="30" fill="#B4B2A9" opacity="0.4"/>
+<rect x="560" y="380" width="30" height="30" fill="#B4B2A9" opacity="0.4"/>
+<path d="M250 190 A60 60 0 1 0 310 250 L310 250 L360 250 L360 220 L310 220" fill="#B5D4F4" opacity="0.4" stroke="#185FA5" stroke-width="1.5"/>
+<circle cx="250" cy="250" r="60" fill="#B5D4F4" opacity="0.3" stroke="#185FA5" stroke-width="1.5"/>
+<g class="fan">
+<path d="M250 250 L250 200 Q265 210 262 235 Z" fill="#378ADD" opacity="0.5"/>
+<path d="M250 250 L293 275 Q280 288 258 268 Z" fill="#378ADD" opacity="0.5"/>
+<path d="M250 250 L207 275 Q220 288 242 268 Z" fill="#378ADD" opacity="0.5"/>
+<path d="M250 250 L250 300 Q235 290 238 265 Z" fill="#378ADD" opacity="0.5"/>
+<path d="M250 250 L207 225 Q220 212 242 232 Z" fill="#378ADD" opacity="0.5"/>
+<path d="M250 250 L293 225 Q280 212 258 232 Z" fill="#378ADD" opacity="0.5"/>
+</g>
+<circle cx="250" cy="250" r="8" fill="#5F5E5A"/>
+<text x="250" y="335" text-anchor="middle" style="font-size:13px;font-weight:600;fill:#1a1d21">Насос</text>
+<rect x="230" y="130" width="40" height="62" rx="3" fill="#9FE1CB" opacity="0.5" stroke="#0F6E56" stroke-width="1"/>
+<text x="250" y="120" text-anchor="middle" style="font-size:11px;fill:#6b7280">всас</text>
+<rect x="345" y="215" width="60" height="34" rx="3" fill="#F5C4B3" opacity="0.5" stroke="#993C1D" stroke-width="1"/>
+<text x="375" y="207" text-anchor="middle" style="font-size:11px;fill:#6b7280">напор</text>
+<rect x="360" y="238" width="55" height="24" rx="3" fill="#D3D1C7" opacity="0.6" stroke="#5F5E5A" stroke-width="1"/>
+<text x="387" y="254" text-anchor="middle" style="font-size:10px;fill:#5F5E5A">муфта</text>
+<rect x="415" y="205" width="150" height="90" rx="8" fill="#B4B2A9" opacity="0.35" stroke="#5F5E5A" stroke-width="1.5"/>
+<line x1="428" y1="215" x2="428" y2="285" stroke="#5F5E5A" stroke-width="0.5" opacity="0.5"/>
+<line x1="440" y1="215" x2="440" y2="285" stroke="#5F5E5A" stroke-width="0.5" opacity="0.5"/>
+<line x1="452" y1="215" x2="452" y2="285" stroke="#5F5E5A" stroke-width="0.5" opacity="0.5"/>
+<text x="500" y="254" text-anchor="middle" style="font-size:12px;font-weight:600;fill:#1a1d21">Двигатель</text>
+<rect x="540" y="230" width="30" height="40" rx="3" fill="#888780" opacity="0.4"/>
+<line class="flow" x1="250" y1="205" x2="250" y2="70" stroke="#E24B4A" stroke-width="1.5" fill="none"/>
+<line class="flow" x1="510" y1="207" x2="560" y2="112" stroke="#7F77DD" stroke-width="1.5" fill="none"/>
+<line class="flow" x1="500" y1="295" x2="560" y2="400" stroke="#EF9F27" stroke-width="1.5" fill="none"/>
+<line class="flow" x1="245" y1="132" x2="120" y2="105" stroke="#1D9E75" stroke-width="1.5" fill="none"/>
+<line class="flow" x1="400" y1="222" x2="470" y2="130" stroke="#534AB7" stroke-width="1.5" fill="none"/>
+<circle class="ring" cx="250" cy="205" r="6" fill="none" stroke="#E24B4A" stroke-width="2"/>
+<circle class="sensor" cx="250" cy="205" r="6" fill="#E24B4A"/>
+<circle class="ring" cx="510" cy="207" r="6" fill="none" stroke="#7F77DD" stroke-width="2" style="animation-delay:0.3s"/>
+<circle class="sensor" cx="510" cy="207" r="6" fill="#7F77DD" style="animation-delay:0.3s"/>
+<circle class="ring" cx="500" cy="295" r="6" fill="none" stroke="#EF9F27" stroke-width="2" style="animation-delay:0.6s"/>
+<circle class="sensor" cx="500" cy="295" r="6" fill="#EF9F27" style="animation-delay:0.6s"/>
+<circle class="ring" cx="245" cy="132" r="6" fill="none" stroke="#1D9E75" stroke-width="2" style="animation-delay:0.9s"/>
+<circle class="sensor" cx="245" cy="132" r="6" fill="#1D9E75" style="animation-delay:0.9s"/>
+<circle class="ring" cx="400" cy="222" r="6" fill="none" stroke="#534AB7" stroke-width="2" style="animation-delay:1.2s"/>
+<circle class="sensor" cx="400" cy="222" r="6" fill="#534AB7" style="animation-delay:1.2s"/>
+<rect x="150" y="52" width="205" height="28" rx="6" fill="#FCEBEB" stroke="#E24B4A" stroke-width="0.5"/>
+<text x="160" y="70" class="lbl" fill="#A32D2D">Акселерометр вибрации</text>
+<rect x="472" y="98" width="198" height="28" rx="6" fill="#EEEDFE" stroke="#7F77DD" stroke-width="0.5"/>
+<text x="482" y="116" class="lbl" fill="#3C3489">Датчик тока (MCSA)</text>
+<rect x="472" y="388" width="198" height="28" rx="6" fill="#FAEEDA" stroke="#EF9F27" stroke-width="0.5"/>
+<text x="482" y="406" class="lbl" fill="#854F0B">Термодатчик двигателя</text>
+<rect x="10" y="90" width="215" height="28" rx="6" fill="#E1F5EE" stroke="#1D9E75" stroke-width="0.5"/>
+<text x="20" y="108" class="lbl" fill="#0F6E56">Давление и расход (всас)</text>
+<rect x="230" y="415" width="220" height="34" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text x="340" y="437" text-anchor="middle" class="lbl" fill="#0C447C">Контроллер сбора (SCADA/PLC)</text>
+</svg></body></html>
+"""
+    components.html(hardware_html, height=490)
+
+    # ---- Специфика оборудования: насосы vs флотомашины ----
+    st.markdown("---")
+    st.markdown("##### Специфика оборудования (кейс «Казахмыс»)")
+    st.caption("Поток данных общий, но у насосов и флотомашин разные критичные "
+               "дефекты и диагностические сигналы. Система учитывает специфику каждого типа.")
+    sp1, sp2 = st.columns(2)
+    with sp1:
+        st.markdown(
+            "<div style='background:#fff;border:1px solid #e8eaed;border-radius:12px;"
+            "padding:18px;border-top:3px solid #185FA5'>"
+            "<div style='font-size:16px;font-weight:600;color:#185FA5;margin-bottom:10px'>"
+            "Насосное оборудование</div>"
+            "<div style='font-size:12px;color:#9ca3af;text-transform:uppercase;"
+            "letter-spacing:0.4px;margin-bottom:4px'>Критичные дефекты</div>"
+            "<div style='font-size:13px;color:#1a1d21;line-height:1.7;margin-bottom:10px'>"
+            "• Гидроабразивный износ рабочего колеса<br>"
+            "• Кавитация шламовых насосов<br>"
+            "• Разрушение подшипников</div>"
+            "<div style='font-size:12px;color:#9ca3af;text-transform:uppercase;"
+            "letter-spacing:0.4px;margin-bottom:4px'>Ключевые сигналы</div>"
+            "<div style='font-size:13px;color:#6b7280;line-height:1.6'>"
+            "токовый анализ (MCSA), падение КПД, вибрация подшипников, "
+            "перепад давления, расход</div></div>", unsafe_allow_html=True)
+    with sp2:
+        st.markdown(
+            "<div style='background:#fff;border:1px solid #e8eaed;border-radius:12px;"
+            "padding:18px;border-top:3px solid #1D9E75'>"
+            "<div style='font-size:16px;font-weight:600;color:#0F6E56;margin-bottom:10px'>"
+            "Флотомашины</div>"
+            "<div style='font-size:12px;color:#9ca3af;text-transform:uppercase;"
+            "letter-spacing:0.4px;margin-bottom:4px'>Критичные дефекты</div>"
+            "<div style='font-size:13px;color:#1a1d21;line-height:1.7;margin-bottom:10px'>"
+            "• Дисбаланс импеллера (налипание, износ лопаток)<br>"
+            "• Разрушение редуктора<br>"
+            "• Нарушение аэрации и режима перемешивания</div>"
+            "<div style='font-size:12px;color:#9ca3af;text-transform:uppercase;"
+            "letter-spacing:0.4px;margin-bottom:4px'>Ключевые сигналы</div>"
+            "<div style='font-size:13px;color:#6b7280;line-height:1.6'>"
+            "вибрация вала, гармоники оборотной частоты, ток привода, "
+            "стабильность импеллера</div></div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div style='font-size:13px;color:#6b7280;margin-top:12px;line-height:1.6'>"
+        "Дисбаланс импеллера флотомашины напрямую влияет на извлечение меди из руды — "
+        "система предупреждает службу механика до того, как дисбаланс разрушит редуктор. "
+        "У насосов износ лопастей ведёт к падению КПД и кавитации, разрушающей "
+        "подшипники — это ловится токовым анализом.</div>", unsafe_allow_html=True)
 
     st.markdown("---")
     st.markdown("##### Уровни системы")
