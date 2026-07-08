@@ -856,16 +856,15 @@ with tab4:
                 "normal": set(),
             }
             active = FAULT_SENSORS.get(final_fault, set())
-            # позиции датчиков: (id, x, y, подпись, цвет)
+            # позиции датчиков подогнаны под полный обзор агрегата
+            # (id, x, y, подпись, цвет)
             sensors = [
-                ("accel", 250, 200, "Вибрация", "#E24B4A"),
-                ("current", 470, 205, "Ток (MCSA)", "#7F77DD"),
-                ("temp", 470, 290, "Температура", "#EF9F27"),
-                ("flow", 150, 250, "Расход", "#1D9E75"),
-                ("press", 370, 155, "Давление", "#534AB7"),
+                ("accel", 235, 130, "Вибрация", "#E24B4A"),
+                ("current", 470, 135, "Ток (MCSA)", "#7F77DD"),
+                ("temp", 470, 250, "Температура", "#EF9F27"),
+                ("flow", 90, 195, "Расход", "#1D9E75"),
+                ("press", 355, 90, "Давление", "#534AB7"),
             ]
-            # строим анимированную схему через components.html (iframe),
-            # где CSS-пульсация активных датчиков работает надёжно
             circles = []
             labels = []
             for sid, x, y, label, color in sensors:
@@ -877,33 +876,56 @@ with tab4:
                     circles.append(
                         f"<circle class='pulse' cx='{x}' cy='{y}' r='9' fill='{color}'/>")
                     labels.append(
-                        f"<text x='{x}' y='{y-22}' text-anchor='middle' font-size='11' "
+                        f"<text x='{x}' y='{y-18}' text-anchor='middle' font-size='13' "
                         f"font-weight='700' fill='{color}'>{label}</text>")
                 else:
                     circles.append(
                         f"<circle cx='{x}' cy='{y}' r='6' fill='{color}' opacity='0.3'/>")
                     labels.append(
-                        f"<text x='{x}' y='{y-22}' text-anchor='middle' font-size='11' "
+                        f"<text x='{x}' y='{y-18}' text-anchor='middle' font-size='12' "
                         f"fill='#9ca3af'>{label}</text>")
             schematic_html = f"""
 <!DOCTYPE html><html><head><style>
-body {{ margin:0; background:transparent; }}
-@keyframes pulse {{ 0%,100% {{ r:9; opacity:1; }} 50% {{ r:12; opacity:0.65; }} }}
-@keyframes ring {{ 0% {{ r:9; opacity:0.6; }} 100% {{ r:24; opacity:0; }} }}
+body {{ margin:0; padding:0; background:transparent; }}
+@keyframes pulse {{ 0%,100% {{ r:9; opacity:1; }} 50% {{ r:13; opacity:0.6; }} }}
+@keyframes ring {{ 0% {{ r:9; opacity:0.6; }} 100% {{ r:26; opacity:0; }} }}
+@keyframes spin {{ to {{ transform: rotate(360deg); }} }}
 .pulse {{ animation: pulse 1.4s ease-in-out infinite; }}
 .ring {{ animation: ring 1.8s ease-out infinite; }}
+.fan {{ animation: spin 4s linear infinite; transform-origin: 235px 195px; }}
 </style></head><body>
-<svg viewBox='0 0 640 340' style='width:100%;background:#fff;border:1px solid #e8eaed;border-radius:12px'>
-<ellipse cx='250' cy='250' rx='70' ry='55' fill='#B5D4F4' opacity='0.35' stroke='#185FA5' stroke-width='1.5'/>
-<text x='250' y='255' text-anchor='middle' font-size='13' font-weight='600' fill='#1a1d21'>Насос</text>
-<rect x='400' y='215' width='130' height='75' rx='8' fill='#B4B2A9' opacity='0.3' stroke='#5F5E5A'/>
-<text x='465' y='257' text-anchor='middle' font-size='12' fill='#1a1d21'>Двигатель</text>
-<rect x='320' y='240' width='45' height='22' rx='3' fill='#D3D1C7' opacity='0.6' stroke='#5F5E5A'/>
+<svg viewBox='0 0 620 290' style='width:100%;display:block;background:#fff;border:1px solid #e8eaed;border-radius:12px'>
+<!-- опорная рама -->
+<rect x='40' y='250' width='500' height='14' rx='3' fill='#B4B2A9' opacity='0.4'/>
+<!-- всасывающий и напорный патрубки -->
+<rect x='55' y='188' width='40' height='14' rx='3' fill='#9FE1CB' opacity='0.5' stroke='#0F6E56'/>
+<rect x='305' y='150' width='55' height='24' rx='3' fill='#F5C4B3' opacity='0.5' stroke='#993C1D'/>
+<!-- корпус насоса (улитка) -->
+<circle cx='235' cy='195' r='55' fill='#B5D4F4' opacity='0.35' stroke='#185FA5' stroke-width='1.5'/>
+<!-- рабочее колесо (вращается) -->
+<g class='fan'>
+<path d='M235 195 L235 152 Q248 160 245 182 Z' fill='#378ADD' opacity='0.5'/>
+<path d='M235 195 L272 216 Q261 227 243 210 Z' fill='#378ADD' opacity='0.5'/>
+<path d='M235 195 L198 216 Q209 227 227 210 Z' fill='#378ADD' opacity='0.5'/>
+<path d='M235 195 L235 238 Q222 230 225 208 Z' fill='#378ADD' opacity='0.5'/>
+<path d='M235 195 L198 174 Q209 163 227 180 Z' fill='#378ADD' opacity='0.5'/>
+<path d='M235 195 L272 174 Q261 163 243 180 Z' fill='#378ADD' opacity='0.5'/>
+</g>
+<circle cx='235' cy='195' r='7' fill='#5F5E5A'/>
+<text x='235' y='235' text-anchor='middle' font-size='13' font-weight='600' fill='#1a1d21'>Насос</text>
+<!-- муфта -->
+<rect x='300' y='185' width='45' height='20' rx='3' fill='#D3D1C7' opacity='0.6' stroke='#5F5E5A'/>
+<!-- двигатель с рёбрами -->
+<rect x='355' y='150' width='150' height='90' rx='8' fill='#B4B2A9' opacity='0.35' stroke='#5F5E5A' stroke-width='1.5'/>
+<line x1='368' y1='160' x2='368' y2='230' stroke='#5F5E5A' stroke-width='0.5' opacity='0.5'/>
+<line x1='380' y1='160' x2='380' y2='230' stroke='#5F5E5A' stroke-width='0.5' opacity='0.5'/>
+<line x1='392' y1='160' x2='392' y2='230' stroke='#5F5E5A' stroke-width='0.5' opacity='0.5'/>
+<text x='445' y='200' text-anchor='middle' font-size='13' font-weight='600' fill='#1a1d21'>Двигатель</text>
 {''.join(circles)}
 {''.join(labels)}
 </svg></body></html>
 """
-            components.html(schematic_html, height=360)
+            components.html(schematic_html, height=340)
             if active:
                 names = {"accel": "вибрация", "current": "ток", "temp": "температура",
                          "flow": "расход", "press": "давление"}
